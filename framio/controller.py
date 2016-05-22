@@ -1,7 +1,6 @@
 # coding: utf-8
 from flask import Flask
 from functools import partial
-
 from framio.settings import DEFAULT_SETTINGS
 
 __author__ = 'damirazo <me@damirazo.ru>'
@@ -172,6 +171,9 @@ class Controller(object):
         self._harvested = True
 
     def apply_lazy_logic(self):
+        """
+        Применение отложенной до момента инициализации приложения логики
+        """
         for method in self._app_logic_queue:
             method()
 
@@ -195,7 +197,7 @@ class Controller(object):
 
             # Собираем список действий
             self.harvest(apps=self.cfg['INSTALLED_APPS'])
-
+            # Применение отложенной логики
             self.apply_lazy_logic()
 
         self.app.run(
