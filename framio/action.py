@@ -25,6 +25,10 @@ class Action(object):
         self._children = []
 
     def rules(self):
+        """
+        Список правил для формирования контекста запроса
+        :rtype: dict
+        """
         return {}
 
     def handler(self, context):
@@ -34,9 +38,20 @@ class Action(object):
         raise NotImplementedError('Метод `handler` должен быть переопределен!')
 
     def pre_handler(self, context):
+        """
+        Вызывается до момента вызова метода с основной логикой действия.
+        Может использоваться для дополнительных проверок
+        или модификации контекста запроса.
+
+        :param context: Сгенерированный контекст запроса
+        :type context: Context
+        """
         pass
 
     def handler_wrapper(self, **kwargs):
+        """
+        Обертка над основной логикой действия.
+        """
         context = Context.build(self.rules(), kwargs)
 
         self.pre_handler(context)
@@ -51,9 +66,26 @@ class Action(object):
             return self.post_handler(context, response)
 
     def post_handler(self, context, response):
+        """
+        Вызывается после выполнения основной логики действия
+        и формирования ответа.
+
+        :param context: Контекст запроса
+        :type context: Context
+        :param response: Ответ действия
+        """
         return response
 
     def failure_handler(self, context, exception):
+        """
+        Вызывается при возникновении исключения в логике действия.
+        По умолчанию пробрасывает возникшее исключение дальше.
+
+        :param context: Контекст запроса
+        :type context: Context
+        :param exception: Выброшенное исключение
+        :type exception: Exception
+        """
         raise exception
 
     def add_child(self, action):

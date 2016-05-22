@@ -65,14 +65,6 @@ class Controller(object):
         :type actions: list
         """
 
-        class _View(object):
-
-            def __init__(self, action_handler):
-                self.handler = action_handler
-
-            def __call__(self, *args, **kwargs):
-                return self.handler(*args, **kwargs)
-
         def _recursive_register(a):
             """
             Рекурсивная сборка дочерних действий

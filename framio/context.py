@@ -5,8 +5,12 @@ __author__ = 'damirazo <me@damirazo.ru>'
 
 
 class Context(object):
+    """
+    Контекст запроса
+    """
 
     _Empty = None
+    """:type : None"""
 
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
@@ -15,6 +19,20 @@ class Context(object):
 
     @classmethod
     def build(cls, rules, params):
+        u"""
+        Сборка контекста запроса на основе списка правил
+        и переданных параметров.
+        Возвращает заполненный экземпляр контекста запроса.
+
+        :param rules: Список контекстных правил
+        :type rules: dict
+        :param params: Список параметров запроса
+        :type params: dict
+
+        :exception: ContextBuildFailed
+
+        :rtype: Context
+        """
         result = {}
 
         for name, rule in rules.items():
