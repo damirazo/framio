@@ -7,7 +7,13 @@ from framio.settings import DEFAULT_SETTINGS
 __author__ = 'damirazo <me@damirazo.ru>'
 
 
-def lazy_logic(method):
+def lazy_method(method):
+    """
+    Декоратор для реализации "ленивого" метода,
+    логика которого будет вызвана после инициализации приложения
+
+    :param method: Обертываемый метод
+    """
     def wrapper(self, *args, **kwargs):
         if self._app is None:
             self._app_logic_queue.append(
@@ -123,7 +129,7 @@ class Controller(object):
         for action in actions:
             _recursive_register(action)
 
-    @lazy_logic
+    @lazy_method
     def register_error_handler(self, action, http_code):
         """
         Регистрация действия для обработки ошибок
