@@ -1,8 +1,21 @@
 # coding: utf-8
 from flask import Flask
+from functools import partial
+
 from framio.settings import DEFAULT_SETTINGS
 
 __author__ = 'damirazo <me@damirazo.ru>'
+
+
+def lazy_logic(method):
+    def wrapper(self, *args, **kwargs):
+        if self._app is None:
+            self._app_logic_queue.append(
+                partial(method, self, *args, **kwargs))
+        else:
+            method(self, *args, **kwargs)
+
+    return wrapper
 
 
 class Controller(object):
@@ -11,6 +24,8 @@ class Controller(object):
     """
     _app = None
     """:type : Flask"""
+    _app_logic_queue = []
+    """:type : list"""
 
     _actions = {}
     """:type : dict"""
@@ -73,28 +88,31 @@ class Controller(object):
             :type a: framio.action.Action
             """
             url = a.full_url
+            cls_name = lambda x: x.__class__.__name__
 
-            # Регистрируем только те маршруты, что имеют URL.
-            # Все прочие считаем группами и проходим по дочерним.
-            if url:
-                if url in self._actions:
-                    raise ValueError((
-                        'URL "{}" уже использовался для действия {}'
-                    ).format(url, self._actions[url].__class__.__name__))
+            if not url:
+                raise RuntimeError((
+                    'Для действия {} не задано значение атрибута url'
+                ).format(cls_name(a)))
 
-                self._actions[a.full_url] = a
+            if url in self._actions:
+                raise ValueError((
+                    'URL "{}" уже использовался для действия {}'
+                ).format(url, cls_name(self._actions[url])))
 
-                params = {'rule': a.full_url}
-                """:type : dict[str, object]"""
-                if a.available_methods:
-                    params.update({'methods': a.available_methods})
+            self._actions[url] = a
 
-                view = a.handler_wrapper
-                view.__func__.__name__ = (
-                    '_{}_handler'.format(a.__class__.__name__))
+            params = {'rule': url}
+            """:type : dict[str, object]"""
+            if a.available_methods:
+                params.update({'methods': a.available_methods})
 
-                # Регистрируем маршрут
-                self.app.route(**params)(view)
+            view = a.handler_wrapper
+            view.__func__.__name__ = (
+                '_{}_handler'.format(cls_name(a)))
+
+            # Регистрируем маршрут
+            self.app.route(**params)(view)
 
             # Проставляем ссылку на контроллер
             a.controller = self
@@ -104,6 +122,27 @@ class Controller(object):
 
         for action in actions:
             _recursive_register(action)
+
+    @lazy_logic
+    def register_error_handler(self, action, http_code):
+        """
+        Регистрация действия для обработки ошибок
+
+        :param action: Действие, получающее управление
+            в момент возникновения ошибки
+        :type action: framio.action.Action
+        :param http_code: обрабатываемый HTTP код
+        :type http_code: int
+        """
+        view = action.handler_wrapper
+        view.__func__.__name__ = (
+            '_{}_handler'.format(action.__class__.__name__))
+
+        # Регистрируем как функцию обработки ошибок
+        self.app.errorhandler(http_code)(view)
+
+        # Проставляем ссылку на контроллер
+        action.controller = self
 
     def harvest(self, apps):
         """
@@ -126,6 +165,10 @@ class Controller(object):
 
         self._harvested = True
 
+    def apply_lazy_logic(self):
+        for method in self._app_logic_queue:
+            method()
+
     def run(self, path, name):
         """
         Запуск приложения
@@ -146,6 +189,8 @@ class Controller(object):
 
             # Собираем список действий
             self.harvest(apps=self.cfg['INSTALLED_APPS'])
+
+            self.apply_lazy_logic()
 
         self.app.run(
             host=self.cfg.get('HOST', '127.0.0.1'),

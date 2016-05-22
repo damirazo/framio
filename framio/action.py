@@ -1,4 +1,5 @@
 # coding: utf-8
+from flask import request
 from framio.context import Context
 
 __author__ = 'damirazo <me@damirazo.ru>'
@@ -48,7 +49,7 @@ class Action(object):
         """
         pass
 
-    def handler_wrapper(self, **kwargs):
+    def handler_wrapper(self, *args, **kwargs):
         """
         Обертка над основной логикой действия.
         """
@@ -105,9 +106,6 @@ class Action(object):
 
         :rtype : str
         """
-        if self.url is None and self.parent is None:
-            return
-
         url_segment = self.url or ''
         parent = self.parent
 
@@ -137,3 +135,10 @@ class Action(object):
         :rtype : dict
         """
         return self.controller.cfg
+
+    @property
+    def request(self):
+        """
+        Объект входящего запроса
+        """
+        return request

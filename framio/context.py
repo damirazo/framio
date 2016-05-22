@@ -12,6 +12,9 @@ class Context(object):
     _Empty = None
     """:type : None"""
 
+    args = []
+    kwargs = {}
+
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             if not hasattr(self, k):
