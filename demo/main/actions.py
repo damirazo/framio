@@ -8,7 +8,7 @@ class IndexDemoAction(Action):
     url = '/'
 
     def handler(self, context):
-        return 'Index page'
+        return self.render('index.html')
 
 
 class BaseDemoAction(Action):

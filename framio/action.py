@@ -1,5 +1,5 @@
 # coding: utf-8
-from flask import request
+from flask import request, render_template
 from framio.context import Context
 
 __author__ = 'damirazo <me@damirazo.ru>'
@@ -98,6 +98,18 @@ class Action(object):
         """
         action.parent = self
         self._children.append(action)
+
+    def render(self, template_name, context=None):
+        """
+        Рендер страницы с помощью шаблонизатора
+
+        :param template_name: Наименование шаблона
+        :param context: Параметры заполнения шаблона
+        """
+        if context is None:
+            context = {}
+
+        return render_template(template_name, **context)
 
     @property
     def full_url(self):
